@@ -71,19 +71,17 @@ static ssize_t osfs_write(struct file *filp, const char __user *buf, size_t len,
     if (osfs_inode->i_blocks == 0) {
         ret = osfs_alloc_data_block(sb_info, &osfs_inode->i_block);
         if (ret) {
-            return ret; // 空間不足 (-ENOSPC)
+            return ret; // 空間不足
         }
         osfs_inode->i_blocks = 1;
-        // 將新分配的區塊清零，避免讀到舊的垃圾資料
-        memset(sb_info->data_blocks + osfs_inode->i_block * BLOCK_SIZE, 0, BLOCK_SIZE);
+        memset(sb_info->data_blocks + osfs_inode->i_block * BLOCK_SIZE, 0, BLOCK_SIZE); // 將新分配的區塊清零
     }
 
     // Step3: Limit the write length to fit within one data block
-    // 因為這個簡單的 FS 每個檔案只有一個 Block，寫入位置不能超過 4096
     if (*ppos >= BLOCK_SIZE) {
         return -ENOSPC; 
     }
-    // 如果欲寫入的長度超過了剩餘空間，將長度截斷
+    // 如果寫入的長度超過剩餘空間，將長度截斷
     if (*ppos + len > BLOCK_SIZE) {
         len = BLOCK_SIZE - *ppos;
     }
@@ -91,8 +89,6 @@ static ssize_t osfs_write(struct file *filp, const char __user *buf, size_t len,
     // Step4: Write data from user space to the data block
     // 記憶體位址：基底位址 (data_blocks) + 區塊偏移 (block index * 4096) + 區塊內偏移 (*ppos)
     data_block = sb_info->data_blocks + osfs_inode->i_block * BLOCK_SIZE + *ppos;
-    
-    // 使用 copy_from_user 安全地複製資料
     if (copy_from_user(data_block, buf, len)) {
         return -EFAULT;
     }
@@ -104,7 +100,7 @@ static ssize_t osfs_write(struct file *filp, const char __user *buf, size_t len,
     // 如果寫入導致檔案變大，更新檔案大小
     if (*ppos > osfs_inode->i_size) {
         osfs_inode->i_size = *ppos;
-        inode->i_size = *ppos; // 重要：也要更新 VFS 的 inode 讓 ls 指令看得到變化
+        inode->i_size = *ppos; // 更新 VFS 的 inode 讓 ls 指令看得到變化
     }
 
     // 更新檔案修改時間

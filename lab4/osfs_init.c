@@ -14,9 +14,9 @@
  *   - A dentry pointer to the root of the mounted filesystem.
  */
 static struct dentry *osfs_mount(struct file_system_type *fs_type,
-                                 int flags,
-                                 const char *dev_name,
-                                 void *data);
+                                int flags,
+                                const char *dev_name,
+                                void *data);
 
 /**
  * Function: osfs_kill_superblock

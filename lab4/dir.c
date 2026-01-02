@@ -266,7 +266,7 @@ static int osfs_create(struct mnt_idmap *idmap, struct inode *dir, struct dentry
     int ret;
 
     // Step2: Validate the file name length
-    // 呼叫我們已經有的 osfs_new_inode 來取得一個新的 Inode
+    // 取得一個新的 Inode
     inode = osfs_new_inode(dir, mode);
     if (IS_ERR(inode)){
         return PTR_ERR(inode);
@@ -283,11 +283,10 @@ static int osfs_create(struct mnt_idmap *idmap, struct inode *dir, struct dentry
     osfs_inode->i_block = 0; 
     osfs_inode->i_size = 0;
     osfs_inode->i_blocks = 0;
-    // 同步 VFS inode 的大小
     inode->i_size = 0;
 
     // Step4: Parent directory entry update for the new file
-    // 將 "檔名" 與 "Inode 號碼" 寫入父目錄的 Data Block 中
+    // 將檔名與 Inode 號碼寫入父目錄的 Data Block 中
     ret = osfs_add_dir_entry(dir, inode->i_ino, dentry->d_name.name, dentry->d_name.len);
     if (ret) {
         pr_err("osfs_create: Failed to add directory entry\n");
